@@ -1,5 +1,7 @@
 extends Resource
-class_name pr_matchmaking_options 
+class_name prMatchmakingOptions 
+
+# The MatchmakingOptions object is used to specify configurations for matchmaking in the game.
 
 @export var waitBeforeCreatingNewRoom : float = 5000
 

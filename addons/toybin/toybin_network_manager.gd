@@ -1,7 +1,11 @@
 extends Node
-class_name PlayroomNetworkManager
+class_name toybinNetworkManager
 
-#RPC stuff
+# Semi Simplified Playroom RPC
+# register custom RPCs using register_rpc()
+# This node will handle packing and reception when you use send_rpc()
+# It will automatically be configured when toybin starts up. ?add project setting to disable
+# NOTE Required for automatic room size enforcement on skipLobby = true
 
 enum builtin_rpc {
 	MESSAGE = 0, #sends a message from one client to another using player_id to specify recipient
@@ -30,7 +34,7 @@ static func send_rpc(custom_rpc_id : int, data : Variant, recipient : String = "
 		return false
 	
 	var head = pnm_header.new(builtin_rpc.TOYRPC,custom_rpc_id,recipient)
-	var payload = PlayroomSynchronizer.pack_data([pnm_header.convert_header(head),data])
+	var payload = toybinSynchronizer.pack_data([pnm_header.convert_header(head),data])
 	
 	Ply.rm.RPC.call("playroom_network_manager_rpc",payload,mode)
 	return true
@@ -70,7 +74,7 @@ class pnm_header:
 			return pnm_header.new(source.type,source.context,source.recipient)
 
 func _onPNM_RPC(data) -> void:
-	var unpacked_data = PlayroomSynchronizer.unpack_data(data[0])
+	var unpacked_data = toybinSynchronizer.unpack_data(data[0])
 	if typeof(unpacked_data) != TYPE_ARRAY:
 		Ply._print_error({"bad data!":ToybinUtil.errors.BAD_DATA_ON_NETWORK,"?":str(unpacked_data)})
 		return
@@ -136,5 +140,5 @@ static func _send_internal_rpc(id : builtin_rpc, data : Variant, recipient : Str
 	#this is for toybin! use at your own risk
 	
 	var head = pnm_header.new(id,NULL_CONTEXT,recipient)
-	var payload = PlayroomSynchronizer.pack_data([pnm_header.convert_header(head),data])
+	var payload = toybinSynchronizer.pack_data([pnm_header.convert_header(head),data])
 	Ply.rm.RPC.call("playroom_network_manager_rpc",payload,mode)

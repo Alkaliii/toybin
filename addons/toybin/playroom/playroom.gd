@@ -24,18 +24,18 @@ static var rm : Object = JavaScriptBridge.get_interface("Playroom") :
 				"No head include?":ToybinUtil.suggestions.SET_HEAD_INCLUDE})
 		return rm
 
-class pr_player:
-	var id : String
-	var state
-	func _init(_id : String, _state):
-		id = _id
-		state = state
+#class pr_player:
+	#var id : String
+	#var state
+	#func _init(_id : String, _state):
+		#id = _id
+		#state = state
 
-static var who_am_i : pr_player
-static var current_init_options : pr_init_options
-static var connected_players : Dictionary = {}
+static var who_am_i : prPlayerState
+static var current_init_options : prInitOptions
+static var connected_players : Dictionary[String,prPlayerState] = {}
 static var connected : bool = false
-static var network_manager : PlayroomNetworkManager
+static var network_manager : toybinNetworkManager
 
 signal INSERT_COIN
 signal SESSION_END
@@ -48,17 +48,17 @@ signal MESSAGE
 signal TIKTOK_EVENT
 
 const ic_sucess = "Client initialized, %s. Access with <Ply.who_am_i>"
-func insertCoin(initOptions : pr_init_options = null) -> void:
+func insertCoin(initOptions : prInitOptions = null) -> void:
 	JavaScriptBridge.eval("")
 	if !initOptions or initOptions == null:
-		initOptions = pr_init_options.new()
+		initOptions = prInitOptions.new()
 	
 	current_init_options = initOptions
 	rm.insertCoin(initOptions.generate(), bridgeToJS(_onInsertCoin))
 	await Ply.PLAYER_JOIN
 	
-	var player = rm.me()
-	who_am_i = pr_player.new(player.id,player)
+	var player := myPlayer()
+	who_am_i = player
 	
 	_print_output([ic_sucess % who_am_i.id])
 	network_manager._network_status()
@@ -76,10 +76,14 @@ func setState(key : String, value : Variant, reliable : bool = true) -> void:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "setState()"})
 		return
 	
+	# WARNING : You can only send Godot Primitives (String, Float, Int, Bool, Null) through Playroom
+	# Certain types might need to be split up, eg. Vector2
+	
 	#reliable == true : Websocket, Slow but will send - good for things like top level game state
 	#reliable == false : WebRTC, Faster but might drop - good for things like player position
 	rm.setState(key,value,reliable)
 
+## TODO Write Test
 func resetStates(exclude : Array[String]) -> void:
 	if !connected: 
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "resetStates()"})
@@ -94,6 +98,7 @@ func isHost() -> bool:
 		return false
 	return rm.isHost()
 
+const th_success = "Host privileges transfered to %s"
 func transferHost(new_host_id : String) -> void:
 	if !isHost(): return
 	if !connected_players.has(new_host_id): 
@@ -101,6 +106,7 @@ func transferHost(new_host_id : String) -> void:
 		return
 	
 	rm.transferHost(new_host_id)
+	_print_output([th_success % new_host_id])
 
 func isStreamScreen() -> bool:
 	if !connected: 
@@ -123,32 +129,62 @@ func startMatchmaking() -> void:
 #func addBot() -> void:
 	#idk how this works sorry.
 
-func myPlayer() -> Object:
+func myPlayer() -> prPlayerState:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "myPlayer()"})
 		return null
-	return rm.myPlayer()
+	return prPlayerState._convert(rm.myPlayer())
 
-func me() -> Object:
+func me() -> prPlayerState:
 	return myPlayer()
 
-func waitForState(key : String, callback : Callable = dummy_callback) -> Variant:
+func waitForState(key : String, callback : Callable = dummy_callback, timeout := 1000.0) -> Variant:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "waitForState()"})
 		return null
 	
-	if callback != dummy_callback:
-		return await rm.waitForState(key,bridgeToJS(callback))
-	return await rm.waitForState(key)
+	# completes after state is set to a truthy value
+	# Custom implementation, since you can't await for JS stuff?
+	var delta := 0.0
+	var s : Variant
+	while delta < timeout:
+		s = getState(key)
+		if s and bool(s):
+			if callback != dummy_callback:
+				callback.call(s)
+			print(s)
+			return s
+		
+		delta += get_process_delta_time()
+		await get_tree().process_frame
+	return null
+	#if callback != dummy_callback:
+		#return await rm.waitForState(key,bridgeToJS(callback))
+	#return await rm.waitForState(key)
 
-func waitForPlayerState(player : Object, key : String, callback : Callable = dummy_callback) -> Variant:
+func waitForPlayerState(player : Object, key : String, callback : Callable = dummy_callback, timeout := 1000.0) -> Variant:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "waitForPlayerState()"})
 		return null
 	
-	if callback != dummy_callback:
-		return await rm.waitForState(player,key,bridgeToJS(callback))
-	return await rm.waitForState(player,key)
+	# completes after state is set to a truthy value
+	# Custom implementation, since you can't await for JS stuff?
+	var delta := 0.0
+	var s : Variant
+	while delta < timeout:
+		s = player.getState(key)
+		if s and bool(s):
+			if callback != dummy_callback:
+				callback.call(s)
+			return s
+		
+		delta += get_process_delta_time()
+		await get_tree().process_frame
+	return null
+	
+	#if callback != dummy_callback:
+		#return await rm.waitForState(player,key,bridgeToJS(callback))
+	#return await rm.waitForState(player,key)
 
 #region RPC METHODS
 static func RPCregister(rpc_name : String, callback : Callable) -> void:
@@ -170,7 +206,7 @@ static func RPCcall(rpc_name : String, data : Variant, mode := ToybinUtil.rpcMod
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "RPC.call()"})
 		return
 	
-	# WARNING : You can only send certain Godot Types through Playroom RPC
+	# WARNING : You can only send Godot Primitives (String, Float, Int, Bool, Null) through Playroom RPC
 	# Certain types might need to be split up, eg. Vector2
 	
 	if response_callback != dummy_callback:
@@ -180,43 +216,39 @@ static func RPCcall(rpc_name : String, data : Variant, mode := ToybinUtil.rpcMod
 #endregion
 
 #region PLAYERSTATE METHODS
-func getProfileOnPlayer(player : Object) -> Dictionary:
-	# This might be empty if you skipLobby
-	var p = player.getProfile()
-	return {
-		"name": p.name,
-		"color": Color(str(p.color.hexString)),
-		"photo": p.photo,
-		"avatarIndex": p.avatarIndex
-	}
+#func getProfileOnPlayer(player : Object) -> Dictionary:
+	## This might be empty if you skipLobby
+	#var p = player.getProfile()
+	#return {
+		#"name": p.name,
+		#"color": Color(str(p.color.hexString)),
+		#"photo": p.photo,
+		#"avatarIndex": p.avatarIndex
+	#}
 
-func getStateOnPlayer(player : Object, key : String) -> Variant:
-	## Consider using PlayroomSynchronizer
-	if !connected: 
-		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.getState()"})
-		return null
-	
-	return player.getState(key)
+#func getStateOnPlayer(player : Object, key : String) -> Variant:
+	### Consider using PlayroomSynchronizer
+	#if !connected: 
+		#_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.getState()"})
+		#return null
+	#
+	#return player.getState(key)
 
-func setStateOnPlayer(player : Object, key : String, value : Variant, reliable : bool = false) -> void:
-	## Consider using PlayroomSynchronizer
-	if !connected: 
-		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.setState()"})
-		return
-	
-	#reliable == true : Websocket, Slow but will send - good for things like top level game state
-	#reliable == false : WebRTC, Faster but might drop - good for things like player position
-	player.setState(key,value,reliable)
+#func setStateOnPlayer(player : Object, key : String, value : Variant, reliable : bool = false) -> void:
+	### Consider using PlayroomSynchronizer
+	#if !connected: 
+		#_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.setState()"})
+		#return
+	#
+	##reliable == true : Websocket, Slow but will send - good for things like top level game state
+	##reliable == false : WebRTC, Faster but might drop - good for things like player position
+	#player.setState(key,value,reliable)
 
-func isPlayerBot(player : Object) -> bool:
-	if !connected:
-		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.isBot()"})
-		return false
-	return player.isBot()
-#endregion
-
-#region JOYSTICK METHODS
-# TODO prolly make a resource for this?
+#func isPlayerBot(player : Object) -> bool:
+	#if !connected:
+		#_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.isBot()"})
+		#return false
+	#return player.isBot()
 #endregion
 
 func openDiscordInviteDialog() -> void:
@@ -244,13 +276,14 @@ const kp_success = "Kicking player, %s."
 func kick(player_id : String, reason : String = "") -> void:
 	#ability to send message to kicked client (kick reason)
 	if !isHost(): return
-	_print_output([kp_success % player_id])
-	
-	var message : Array[String] = ["You have been kicked."]
-	if reason and reason != "": message.append(str("Reason: ",reason))
-	PlayroomNetworkManager._send_internal_rpc(PlayroomNetworkManager.builtin_rpc.KICKED,message,player_id)
-	
 	var kicked_player = connected_players[player_id]
+	#
+	#_print_output([kp_success % player_id])
+	#
+	#var message : Array[String] = ["You have been kicked."]
+	#if reason and reason != "": message.append(str("Reason: ",reason))
+	#PlayroomNetworkManager._send_internal_rpc(PlayroomNetworkManager.builtin_rpc.KICKED,message,player_id)
+	#
 	kicked_player.kick()
 
 #region INTERNAL METHODS
@@ -258,12 +291,12 @@ func _kickPlayer(player_state, reason : String = "", room_full : bool = false) -
 	#ability to send message to kicked client (kick reason)
 	if !isHost(): return
 	
-	var type = PlayroomNetworkManager.builtin_rpc.KICKED
-	if room_full: type = PlayroomNetworkManager.builtin_rpc.ROOM_FULL
+	var type = toybinNetworkManager.builtin_rpc.KICKED
+	if room_full: type = toybinNetworkManager.builtin_rpc.ROOM_FULL
 	
 	var message : Array[String] = ["You have been kicked."]
 	if reason and reason != "": message.append(str("		Reason: ",reason))
-	PlayroomNetworkManager._send_internal_rpc(type,message,player_state.id)
+	toybinNetworkManager._send_internal_rpc(type,message,player_state.id)
 	
 	_print_output([kp_success % player_state.id])
 	player_state.kick()
@@ -289,7 +322,7 @@ func _onPlayerJoin(args):
 	else: recon = "(Reconnect)"
 	_print_output([str("Player Joined! ",recon," pid : ",state.id)])
 	
-	connected_players[state.id] = state
+	connected_players[state.id] = prPlayerState._convert(state)
 	state.onQuit(bridgeToJS(_onPlayerQuit))
 
 func _roomFull(new_player) -> bool:
@@ -301,8 +334,8 @@ func _roomFull(new_player) -> bool:
 	if connected_players.size() == current_init_options.maxPlayersPerRoom:
 		#room full
 		_print_output(["This room is full!"])
-		if new_player.id == myPlayer().id:
-			Ply.ROOM_FULL.emit()
+		#if new_player.id == myPlayer().id:
+			#Ply.ROOM_FULL.emit()
 		return true
 	return false
 
@@ -330,26 +363,36 @@ func _setup_network_manager():
 		remove_child(network_manager)
 		network_manager.queue_free()
 	
-	var n = PlayroomNetworkManager.new()
+	var n = toybinNetworkManager.new()
 	add_child(n)
 	network_manager = n
 	n._setup_network()
 
+var d : float
 func _process(delta):
+	d += delta
+	if d > 1.0:
+		d = 0.0
 	if Input.is_action_just_pressed("ui_left"):
-		print("connected : ",connected)
+		setState("testState",true)
+	if Input.is_action_just_pressed("ui_right"):
+		setState("testState",false)
 
+var j : prJoystickController
 func _ready():
 	var s := _status(false)
 	_print_output([str("is running? : ",s)])
 	
 	if s:
 		await get_tree().create_timer(1.5)
-		var t := pr_init_options.new()
+		var t := prInitOptions.new()
 		t.roomCode = "9999"
-		t.maxPlayersPerRoom = 1
+		t.maxPlayersPerRoom = 2
 		t.skipLobby = true
-		insertCoin(t)
+		await insertCoin(t)
+		var jo := prJoystickOptions.new()
+		jo.keyboard = false
+		j = prJoystickController.create_joystick(who_am_i,jo)
 
 # NOTE for debugging plugin
 const ignore_bad_game_id := false

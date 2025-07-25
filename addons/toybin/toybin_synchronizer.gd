@@ -1,5 +1,5 @@
 extends Object
-class_name PlayroomSynchronizer
+class_name toybinSynchronizer
 
 # call me to pack or unpack data sent using toybin!
 # you can also call me with an identifier to synchronize data on a node
@@ -33,7 +33,13 @@ static func push_sync(
 	#pack data
 	var packdat := pack_data(dat)
 	
-	if on_player: Ply.setStateOnPlayer(on_player,identifier,packdat,reliable)
+	if on_player: 
+		#Ply.setStateOnPlayer(on_player,identifier,packdat,reliable)
+		if on_player is prPlayerState:
+			on_player.setState(identifier,packdat,reliable)
+		else:
+			var converted_player : prPlayerState = prPlayerState._convert(on_player)
+			converted_player.setState(identifier,packdat,reliable)
 	else: Ply.setState(identifier,packdat,reliable)
 
 static func pull_sync(

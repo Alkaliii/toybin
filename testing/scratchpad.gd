@@ -6,11 +6,11 @@ extends RefCounted
 # Class: Ply
 # For utilizing playroom
 
-# Class: PlayroomNetworkManager
+# Class: toybinNetworkManager
 # For peer communication
 
-# Class: PlayroomSynchronizer
+# Class: toybinSynchronizer
 # For efficent packing of synchronized data
 
-# Class: PuppetManager
+# Class: toybinPuppetManager
 # For fast and automatic management of a puppet scene

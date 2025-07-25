@@ -1,7 +1,8 @@
 extends Resource
-class_name pr_init_options
+class_name prInitOptions
 
 # https://docs.joinplayroom.com/apidocs
+# Configuration for how Playroom should operate
 
 var gameId : String
 @export var streamMode : bool = false
@@ -17,11 +18,11 @@ var gameId : String
 @export var maxPlayersPerRoom : float
 #@export var defaultStates : Object #idk needs to be set differently?
 #@export var defaultPlayerStates : Object #idk needs to be set differently?
-@export var matchmaking : pr_matchmaking_options
+@export var matchmaking : prMatchmakingOptions
 @export var discord : bool = false
 
-func generate() -> Variant:
-	var initOptions = JavaScriptBridge.create_object("Object")
+func generate() -> Object:
+	var initOptions : Object = JavaScriptBridge.create_object("Object")
 	initOptions.gameId = ToybinUtil.get_game_id()
 	initOptions.streamMode = streamMode
 	if liveMode: initOptions.liveMode = liveMode
