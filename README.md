@@ -2,7 +2,7 @@
 <b>toybin!</b>
 
 ---
-An <i>unoffical</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](https://godotengine.org/)
+An <i>unofficial</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](https://godotengine.org/)
 
 - Provides encapsulations for 90% of the Playroom API
 - And some extra features I'm still working on
