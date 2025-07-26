@@ -1,11 +1,13 @@
+@icon("res://addons/toybin/assets/sm_tb_icn.svg")
 extends Node
 class_name toybinNetworkManager
-
-# Semi Simplified Playroom RPC
-# register custom RPCs using register_rpc()
-# This node will handle packing and reception when you use send_rpc()
-# It will automatically be configured when toybin starts up. ?add project setting to disable
-# NOTE Required for automatic room size enforcement on skipLobby = true
+## Semi Simplified Playroom RPC
+## 
+## Register custom RPCs using [method register_rpc].
+## This node will handle packing and reception when you use [method send_rpc].
+## It will automatically be configured when toybin! starts up. Some toybin! functionality relies on this node.
+## NOTE: Required for automatic room size enforcement on [member initOptions.skipLobby] = [code]true[/code]
+# ?add project setting to disable automatic start up
 
 enum builtin_rpc {
 	MESSAGE = 0, #sends a message from one client to another using player_id to specify recipient
@@ -22,8 +24,8 @@ static var custom_rpcs : Dictionary[int,Callable] = {
 	DEBUG_CRPC:Callable(_onDebug)
 } #int? callable
 
+## This function will send an rpc using toybin! standards
 static func send_rpc(custom_rpc_id : int, data : Variant, recipient : String = "", mode := ToybinUtil.rpcMode.OTHERS) -> bool:
-	#this function will send an rpc using toybin! standards
 	if !custom_rpcs.has(custom_rpc_id):
 		#unregistered rpc
 		Ply._print_error({"unregistered rpc!":ToybinUtil.errors.UNREGISTERED_TOYRPC % str(custom_rpc_id)})
@@ -36,10 +38,11 @@ static func send_rpc(custom_rpc_id : int, data : Variant, recipient : String = "
 	var head = pnm_header.new(builtin_rpc.TOYRPC,custom_rpc_id,recipient)
 	var payload = toybinSynchronizer.pack_data([pnm_header.convert_header(head),data])
 	
-	Ply.rm.RPC.call("playroom_network_manager_rpc",payload,mode)
+	Ply.rm.RPC.call("toybin_network_manager_rpc",payload,mode)
 	return true
 
 const register_success = "RPC_ID <%s> has been registered to <%s>."
+## This function helps toybin! organize your callbacks
 static func register_rpc(id : int,action : Callable) -> bool:
 	if id in [NULL_CONTEXT,DEBUG_CRPC]:
 		#reserved id
@@ -73,7 +76,7 @@ class pnm_header:
 		elif source is Dictionary: 
 			return pnm_header.new(source.type,source.context,source.recipient)
 
-func _onPNM_RPC(data) -> void:
+func _onTNM_RPC(data) -> void:
 	var unpacked_data = toybinSynchronizer.unpack_data(data[0])
 	if typeof(unpacked_data) != TYPE_ARRAY:
 		Ply._print_error({"bad data!":ToybinUtil.errors.BAD_DATA_ON_NETWORK,"?":str(unpacked_data)})
@@ -119,7 +122,7 @@ func _onPNM_RPC(data) -> void:
 				Ply._print_error({"unregistered rpc!":ToybinUtil.errors.UNREGISTERED_TOYRPC % str(HEADER.context)})
 
 func _setup_network() -> void:
-	Ply.rm.RPC.register("playroom_network_manager_rpc",Ply.bridgeToJS(_onPNM_RPC))
+	Ply.rm.RPC.register("toybin_network_manager_rpc",Ply.bridgeToJS(_onTNM_RPC))
 	
 	#await Ply.INSERT_COIN
 	#await get_tree().create_timer(1.0).timeout
@@ -141,4 +144,4 @@ static func _send_internal_rpc(id : builtin_rpc, data : Variant, recipient : Str
 	
 	var head = pnm_header.new(id,NULL_CONTEXT,recipient)
 	var payload = toybinSynchronizer.pack_data([pnm_header.convert_header(head),data])
-	Ply.rm.RPC.call("playroom_network_manager_rpc",payload,mode)
+	Ply.rm.RPC.call("toybin_network_manager_rpc",payload,mode)

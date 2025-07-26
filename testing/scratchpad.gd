@@ -12,5 +12,7 @@ extends RefCounted
 # Class: toybinSynchronizer
 # For efficent packing of synchronized data
 
-# Class: toybinPuppetManager
-# For fast and automatic management of a puppet scene
+# Class: toybinSpawner
+# For fast and automatic management of a synchronized scenes
+# eg. like multiplayer spawner? Uses RPC to spawn assigned scene on
+# other clients

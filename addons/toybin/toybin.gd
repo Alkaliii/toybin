@@ -4,7 +4,9 @@ extends EditorPlugin
 func _enable_plugin() -> void:
 	add_autoload_singleton("Ply","playroom/playroom.gd")
 	add_settings()
-	
+
+func _get_plugin_icon():
+	return preload("res://addons/toybin/assets/sm_tb_icn.svg")
 
 func _disable_plugin() -> void:
 	remove_autoload_singleton("Ply")

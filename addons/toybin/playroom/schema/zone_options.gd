@@ -1,9 +1,9 @@
+@icon("res://addons/toybin/assets/sm_pra_icn.svg")
 extends Resource
 class_name prZoneOptions
-
-# ZoneOptions let's you define zones on Joystick that are triggered when player 
-# drags Joystick in that zone. This behaves same as buttons above, 
-# isPressed method can be used to detect if a zone button is active or not. 
+## ZoneOptions let's you define zones on Joystick that are triggered when player drags Joystick in that zone.
+##
+## [method isPressed] can be used to detect if a zone button is active or not. 
 
 @export var up : prButtonOptions
 @export var down : prButtonOptions

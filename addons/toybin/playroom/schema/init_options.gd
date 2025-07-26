@@ -1,8 +1,9 @@
+@icon("res://addons/toybin/assets/sm_pra_icn.svg")
 extends Resource
 class_name prInitOptions
-
-# https://docs.joinplayroom.com/apidocs
-# Configuration for how Playroom should operate
+## Configuration for how Playroom should operate
+##
+## [url]https://docs.joinplayroom.com/apidocs[/url]
 
 var gameId : String
 @export var streamMode : bool = false

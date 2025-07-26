@@ -1,7 +1,7 @@
+@icon("res://addons/toybin/assets/sm_pra_icn.svg")
 extends Object
 class_name prJoystickController
-
-# Renders a Joystick Controller on screen using Playroom
+## Renders a Joystick Controller on screen using Playroom
 
 var javascript_object : Object
 var js_property : String

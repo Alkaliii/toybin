@@ -1,11 +1,14 @@
+@icon("res://addons/toybin/assets/sm_pr_icn.svg")
 extends Node
-
-# I provide simple functions for working with Playroom
+## I provide simple functions for working with playroom
+##
+## Call Ply to access me from any script.
+## [url]https://docs.joinplayroom.com/apidocs[/url]
 
 # ATTENTION, please copy and paste the following line into your web export preset:
 # <script src="https://unpkg.com/playroomkit/multiplayer.full.umd.js" crossorigin="anonymous"></script>
 
-# Call Ply.rm from any script to talk to playroom directly!
+## Call Ply.rm from any script to talk to playroom directly!
 static var rm : Object = JavaScriptBridge.get_interface("Playroom") : 
 	set(value):
 		rm = value
@@ -24,30 +27,41 @@ static var rm : Object = JavaScriptBridge.get_interface("Playroom") :
 				"No head include?":ToybinUtil.suggestions.SET_HEAD_INCLUDE})
 		return rm
 
-#class pr_player:
-	#var id : String
-	#var state
-	#func _init(_id : String, _state):
-		#id = _id
-		#state = state
-
+## Access the client's state through this var
 static var who_am_i : prPlayerState
+
+## Access room settings through this var
 static var current_init_options : prInitOptions
+
+## Access other connected players through this var
 static var connected_players : Dictionary[String,prPlayerState] = {}
+
+## Quickly check connection status through this var
 static var connected : bool = false
+
+## Perform network operations by calling on this var
 static var network_manager : toybinNetworkManager
 
-signal INSERT_COIN
-signal SESSION_END
-signal DISCONNECTED
-signal PLAYER_JOIN
-signal PLAYER_QUIT
-signal ROOM_FULL
-signal KICKED
-signal MESSAGE
-signal TIKTOK_EVENT
+# Subscribe to these signals from other nodes to listen to playroom callbacks
+# eg. Ply.INSERT_COIN.connect(<YourCallback>)
+#region PLAYROOM CALLBACKS
+signal INSERT_COIN ## Emitted after playroom launches, will emit immediately if skipLobby = [code]true[/code]
+signal DISCONNECTED ## Emitted if the client disconnects, this includes when the client is kicked
+signal PLAYER_JOIN ## Emitted when a player joins the current room, will not be emitted on reconnects (toybin behaviour)
+signal PLAYER_QUIT ## Emitted when a player leaves the current room
+signal TIKTOK_EVENT ## Emitted when playroom receives a ticktok event
+#endregion
+
+# Subscribe to these signals from other nodes to listen to toybin callbacks 
+#region TOYBIN CALLBACKS
+signal ROOM_FULL ## Emitted by toybin when the room is full and skipLobby == [code]true[/code], only emitted on the kicked client
+signal KICKED ## Emitted by toybin when the client gets kicked
+signal MESSAGE ## Emitted by toybin when the client receives a message
+#endregion
 
 const ic_sucess = "Client initialized, %s. Access with <Ply.who_am_i>"
+## Tells playroom to start.
+## [signal Ply.INSERT_COIN] will get emitted on success
 func insertCoin(initOptions : prInitOptions = null) -> void:
 	JavaScriptBridge.eval("")
 	if !initOptions or initOptions == null:
@@ -63,15 +77,17 @@ func insertCoin(initOptions : prInitOptions = null) -> void:
 	_print_output([ic_sucess % who_am_i.id])
 	network_manager._network_status()
 
+## Retrieves state for the given key from playroom,
+## Consider using [b]toybinSynchronizer[/b]
 func getState(key : String) -> Variant:
-	## Consider using PlayroomSynchronizer
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "getState()"})
 		return null
 	return rm.getState(key)
 
+## Sets state for the given key using playroom,
+## Consider using [b]toybinSynchronizer[/b]
 func setState(key : String, value : Variant, reliable : bool = true) -> void:
-	## Consider using PlayroomSynchronizer
 	if !connected: 
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "setState()"})
 		return
@@ -83,15 +99,37 @@ func setState(key : String, value : Variant, reliable : bool = true) -> void:
 	#reliable == false : WebRTC, Faster but might drop - good for things like player position
 	rm.setState(key,value,reliable)
 
-## TODO Write Test
+## Resets all game states to default values ([code]null[/code] usually),
+## will exclude keys in the exclude list
 func resetStates(exclude : Array[String]) -> void:
 	if !connected: 
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "resetStates()"})
 		return
 	
-	if exclude: rm.resetStates(exclude)
+	if exclude:
+		var excludeArray := JavaScriptBridge.create_object("Array")
+		for s in exclude:
+			excludeArray.push(s)
+		
+		rm.resetStates(excludeArray)
 	else: rm.resetStates()
 
+## Resets all player states to default values ([code]null[/code] usually),
+## will exclude keys in the exclude list
+func resetPlayersStates(exclude : Array[String]) -> void:
+	if !connected: 
+		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "resetPlayerStates()"})
+		return
+	
+	if exclude:
+		var excludeArray := JavaScriptBridge.create_object("Array")
+		for s in exclude:
+			excludeArray.push(s)
+		
+		rm.resetPlayersStates(excludeArray)
+	else: rm.resetPlayersStates()
+
+## Returns [code]true[/code] if the current player ([member who_am_i]) is host
 func isHost() -> bool:
 	if !connected: 
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "isHost()"})
@@ -99,6 +137,7 @@ func isHost() -> bool:
 	return rm.isHost()
 
 const th_success = "Host privileges transfered to %s"
+## Allows current host to transfer privileges to another player in the room
 func transferHost(new_host_id : String) -> void:
 	if !isHost(): return
 	if !connected_players.has(new_host_id): 
@@ -108,18 +147,22 @@ func transferHost(new_host_id : String) -> void:
 	rm.transferHost(new_host_id)
 	_print_output([th_success % new_host_id])
 
+## Returns [code]true[/code] is the current screen is the stream screen.
+## requires [member prInitOptions.stream_mode]
 func isStreamScreen() -> bool:
 	if !connected: 
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "isStreamScreen()"})
 		return false
 	return rm.isStreamScreen()
 
+## Returns the current room code
 func getRoomCode() -> String:
 	if !connected: 
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "getRoomCode()"})
 		return ""
 	return rm.getRoomCode()
 
+## Starts matchmaking manually
 func startMatchmaking() -> void:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "startMatchmaking()"})
@@ -129,15 +172,19 @@ func startMatchmaking() -> void:
 #func addBot() -> void:
 	#idk how this works sorry.
 
+## Returns the client's state
 func myPlayer() -> prPlayerState:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "myPlayer()"})
 		return null
 	return prPlayerState._convert(rm.myPlayer())
 
+## Returns the client's state
 func me() -> prPlayerState:
 	return myPlayer()
 
+## Will attempt to wait for the state of the given key to be a truthy value.
+## Will timeout after the specified value and return [code]null[/code] (toybin behaviour)
 func waitForState(key : String, callback : Callable = dummy_callback, timeout := 1000.0) -> Variant:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "waitForState()"})
@@ -162,6 +209,8 @@ func waitForState(key : String, callback : Callable = dummy_callback, timeout :=
 		#return await rm.waitForState(key,bridgeToJS(callback))
 	#return await rm.waitForState(key)
 
+## Will attempt to wait for the player state of the given key to be a truthy value.
+## Will timeout after the specified value and return [code]null[/code] (toybin behaviour)
 func waitForPlayerState(player : Object, key : String, callback : Callable = dummy_callback, timeout := 1000.0) -> Variant:
 	if !connected:
 		_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "waitForPlayerState()"})
@@ -187,6 +236,8 @@ func waitForPlayerState(player : Object, key : String, callback : Callable = dum
 	#return await rm.waitForState(player,key)
 
 #region RPC METHODS
+## Register a callback to be called when an RPC with the given name is recieved.
+## This will call the callback with the following argument [code][<YourData>, sender PlayerState, RPC Mode][/code]
 static func RPCregister(rpc_name : String, callback : Callable) -> void:
 	# NOTE use this if you don't like toybin's system
 	## toybin offers a similar system that functions through a single callback.
@@ -197,6 +248,8 @@ static func RPCregister(rpc_name : String, callback : Callable) -> void:
 	
 	rm.RPC.register(rpc_name,bridgeToJS(callback))
 
+## Perform an RPC with the given name and send the given data according to the specified mode.
+## A response callback can be specified which will call when the callback is received.
 static func RPCcall(rpc_name : String, data : Variant, mode := ToybinUtil.rpcMode.OTHERS, response_callback : Callable = dummy_callback) -> void:
 	# NOTE use this if you don't like toybin's system
 	## toybin offers a similar system that functions through a single callback.
@@ -215,42 +268,8 @@ static func RPCcall(rpc_name : String, data : Variant, mode := ToybinUtil.rpcMod
 
 #endregion
 
-#region PLAYERSTATE METHODS
-#func getProfileOnPlayer(player : Object) -> Dictionary:
-	## This might be empty if you skipLobby
-	#var p = player.getProfile()
-	#return {
-		#"name": p.name,
-		#"color": Color(str(p.color.hexString)),
-		#"photo": p.photo,
-		#"avatarIndex": p.avatarIndex
-	#}
-
-#func getStateOnPlayer(player : Object, key : String) -> Variant:
-	### Consider using PlayroomSynchronizer
-	#if !connected: 
-		#_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.getState()"})
-		#return null
-	#
-	#return player.getState(key)
-
-#func setStateOnPlayer(player : Object, key : String, value : Variant, reliable : bool = false) -> void:
-	### Consider using PlayroomSynchronizer
-	#if !connected: 
-		#_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.setState()"})
-		#return
-	#
-	##reliable == true : Websocket, Slow but will send - good for things like top level game state
-	##reliable == false : WebRTC, Faster but might drop - good for things like player position
-	#player.setState(key,value,reliable)
-
-#func isPlayerBot(player : Object) -> bool:
-	#if !connected:
-		#_print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.isBot()"})
-		#return false
-	#return player.isBot()
-#endregion
-
+## Opens a dialog to invite players to the current Discord activity. 
+## Not available outside of Discord.
 func openDiscordInviteDialog() -> void:
 	#only avalible inside discord, as a discord activity?
 	rm.openDiscordInviteDialog()
@@ -258,9 +277,13 @@ func openDiscordInviteDialog() -> void:
 #func getDiscordClient():
 	#yea idk bro
 
+## Returns the access token of the current Discord user. 
+## Not available outside of Discord.
 func getDiscordAccessToken() -> String:
 	return rm.getDiscordAccessToken()
 
+## Returns the URL of the current page.
+## Useful for creating share links.
 func getCurrentURL() -> String:
 	var url : String = JavaScriptBridge.eval("window.location.href")
 	return url
@@ -268,14 +291,18 @@ func getCurrentURL() -> String:
 # Keep a reference to the callback so it doesn't get garbage collected
 static var jsBridgeReferences : Array[JavaScriptObject] = []
 static func bridgeToJS(cb : Callable) -> JavaScriptObject:
+	# This method will allow you to connect godot methods to JavaScript calls.
 	var jsCallback := JavaScriptBridge.create_callback(cb)
 	jsBridgeReferences.push_back(jsCallback)
 	return jsCallback
 
 const kp_success = "Kicking player, %s."
+
+## This method will let you kick a player from the room. Only the host can use it.
 func kick(player_id : String, reason : String = "") -> void:
 	#ability to send message to kicked client (kick reason)
 	if !isHost(): return
+	if !connected_players.has(player_id): return
 	var kicked_player = connected_players[player_id]
 	#
 	#_print_output([kp_success % player_id])
@@ -368,31 +395,9 @@ func _setup_network_manager():
 	network_manager = n
 	n._setup_network()
 
-var d : float
-func _process(delta):
-	d += delta
-	if d > 1.0:
-		d = 0.0
-	if Input.is_action_just_pressed("ui_left"):
-		setState("testState",true)
-	if Input.is_action_just_pressed("ui_right"):
-		setState("testState",false)
-
-var j : prJoystickController
 func _ready():
 	var s := _status(false)
 	_print_output([str("is running? : ",s)])
-	
-	if s:
-		await get_tree().create_timer(1.5)
-		var t := prInitOptions.new()
-		t.roomCode = "9999"
-		t.maxPlayersPerRoom = 2
-		t.skipLobby = true
-		await insertCoin(t)
-		var jo := prJoystickOptions.new()
-		jo.keyboard = false
-		j = prJoystickController.create_joystick(who_am_i,jo)
 
 # NOTE for debugging plugin
 const ignore_bad_game_id := false

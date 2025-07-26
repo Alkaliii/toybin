@@ -1,18 +1,23 @@
 extends Object
 class_name toybinSynchronizer
+## Call me to pack or unpack data sent using toybin!
+##
+## You can also call me with an identifier to synchronize data on a node
 
-# call me to pack or unpack data sent using toybin!
-# you can also call me with an identifier to synchronize data on a node
-
+## Packs most variant types into a format playroom will transmit.
+## Will not pack objects, since that isn't safe.
 static func pack_data(data : Variant) -> String:
 	#will not pack objects.
 	var dat := var_to_bytes(data).hex_encode()
 	return dat
 
+## Unpacks data back into variants that was originally packed by this node
+## Objects will be unpacked into junk.
 static func unpack_data(data : String) -> Variant:
 	var dat := bytes_to_var(data.hex_decode())
 	return dat
 
+## Creates state for [method pull_sync] to pull from.
 static func push_sync(
 	identifier : String, 
 	variables : Dictionary, 
@@ -42,7 +47,8 @@ static func push_sync(
 			converted_player.setState(identifier,packdat,reliable)
 	else: Ply.setState(identifier,packdat,reliable)
 
-static func pull_sync(
+## Pulls state and assign the values automatically on source
+static func pull_sync( #make another function that pulls without setting
 	identifier : String,
 	source : Object,
 	on_player : Object = null) -> void:

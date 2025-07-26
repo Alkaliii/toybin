@@ -1,7 +1,7 @@
+@icon("res://addons/toybin/assets/sm_pra_icn.svg")
 extends Resource
 class_name prButtonOptions
-
-# Configuration for on screen buttons
+## Configuration for on screen buttons
 
 @export var id : String
 @export var label : String = ""

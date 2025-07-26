@@ -1,7 +1,7 @@
+@icon("res://addons/toybin/assets/sm_pra_icn.svg")
 extends Object
 class_name prPlayerState
-
-# A PlayerState object represents a player in the room.
+## A PlayerState object represents a player in the room.
 
 #actual java script object
 var javascript_object : Object
@@ -35,7 +35,7 @@ func getProfile() -> Dictionary:
 	}
 
 func getState(key : String) -> Variant:
-	## Consider using PlayroomSynchronizer
+	## Consider using toybinSynchronizer
 	if !javascript_object: return null
 	if !Ply.connected: 
 		Ply._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.getState()"})
@@ -47,7 +47,7 @@ func getState(key : String) -> Variant:
 	return javascript_object.getState(key)
 
 func setState(key : String, value : Variant, reliable : bool = false) -> void:
-	## Consider using PlayroomSynchronizer
+	## Consider using toybinSynchronizer
 	if !javascript_object: return
 	if !Ply.connected: 
 		Ply._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.setState()"})

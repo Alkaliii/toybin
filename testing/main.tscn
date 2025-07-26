@@ -1,4 +1,6 @@
-[gd_scene format=3 uid="uid://bbjehsw51n2c6"]
+[gd_scene load_steps=2 format=3 uid="uid://bbjehsw51n2c6"]
+
+[ext_resource type="Texture2D" uid="uid://bn2huckm0lb5s" path="res://addons/toybin/assets/sm_pr_icn.svg" id="1_k3du7"]
 
 [node name="Main" type="Node"]
 
@@ -12,28 +14,41 @@ grow_vertical = 2
 
 [node name="TopLeft" type="ColorRect" parent="Node2D"]
 custom_minimum_size = Vector2(20, 20)
-layout_mode = 1
+layout_mode = 2
 offset_right = 20.0
 offset_bottom = 20.0
+size_flags_horizontal = 0
+size_flags_vertical = 0
+color = Color(1, 1, 1, 0)
 
-[node name="TopRight" type="ColorRect" parent="Node2D"]
+[node name="TextureRect" type="TextureRect" parent="Node2D/TopLeft"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -8.0
+offset_right = 8.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+texture = ExtResource("1_k3du7")
+
+[node name="BottomRight" type="ColorRect" parent="Node2D"]
 custom_minimum_size = Vector2(20, 20)
 layout_mode = 1
-anchors_preset = 1
+anchors_preset = 3
 anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -20.0
-offset_bottom = 20.0
-grow_horizontal = 0
-
-[node name="BottomLeft" type="ColorRect" parent="Node2D"]
-custom_minimum_size = Vector2(20, 20)
-layout_mode = 1
-anchors_preset = 2
 anchor_top = 1.0
+anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = -20.0
 offset_top = -20.0
-offset_right = 20.0
+grow_horizontal = 0
 grow_vertical = 0
 
 [node name="Center" type="ColorRect" parent="Node2D"]

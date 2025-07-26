@@ -1,8 +1,9 @@
+@icon("res://addons/toybin/assets/sm_pra_icn.svg")
 extends Resource
 class_name prJoystickOptions
-
-# Settings for Joystick Configuration
-# NOTE Joystick will not appear when keyboard is set to true
+## Settings for Joystick Configuration
+##
+## NOTE: Joystick will not appear when keyboard is set to true
 
 enum JOYTYPE {
 	ANGULAR,
