@@ -71,3 +71,17 @@ static func get_game_id() -> String:
 			return ""
 		
 		return id
+
+const error_format = "[toybin/ %s] %s"
+static func _print_error(error_messages : Dictionary[String,String]) -> void:
+	# [ERROR: <dic_key>] <dic_value>
+	if !ProjectSettings.get_setting("toybin/debug/print_errors"): return
+	for e in error_messages:
+		var short = e
+		var long = error_messages[e]
+		printerr(error_format % [short,long])
+
+static func _print_output(output_messages : Array[String]) -> void:
+	if !ProjectSettings.get_setting("toybin/debug/print_output"): return
+	for o in output_messages:
+		print("[toybin!] ",o)

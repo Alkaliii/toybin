@@ -32,5 +32,5 @@ renderer/rendering_method.mobile="gl_compatibility"
 
 debug/print_errors=true
 debug/print_output=true
-general/game_id_env_path="res://.env"
 general/game_id="0"
+general/game_id_env_path=""

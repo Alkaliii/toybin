@@ -1,4 +1,4 @@
-[preset.0]
+[preset.$preset_number$]
 
 name="Web"
 platform="Web"
@@ -18,7 +18,7 @@ encrypt_pck=false
 encrypt_directory=false
 script_export_mode=2
 
-[preset.0.options]
+[preset.$preset_number$.options]
 
 custom_template/debug=""
 custom_template/release=""
