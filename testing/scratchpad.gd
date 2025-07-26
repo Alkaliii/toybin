@@ -3,7 +3,7 @@ extends RefCounted
 ## ToyBin!
 # A Playroom framework for Godot 4
 
-# Class: Ply
+# Global: Ply
 # For utilizing playroom
 
 # Class: toybinNetworkManager
@@ -12,7 +12,11 @@ extends RefCounted
 # Class: toybinSynchronizer
 # For efficent packing of synchronized data
 
-# Class: toybinSpawner
+# TODO Class: toybinSpawner
 # For fast and automatic management of a synchronized scenes
 # eg. like multiplayer spawner? Uses RPC to spawn assigned scene on
 # other clients
+
+# TODO Add a demo (tag?)
+# with or without lobby
+# with or without on screen controls
