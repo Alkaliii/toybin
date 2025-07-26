@@ -18,3 +18,9 @@ An <i>unoffical</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](h
 
 > [!NOTE]
 > Does not provide support for playroom bots and some discord stuff...
+
+## Install
+1. Download the repo
+2. Move the `addons/toybin` folder to the `addons` folder of your project
+3. Enable toybin! under `Project -> Project Settings -> Plugins`
+4. Add your game ID to toybin! in `Project -> Project Settings -> toybin -> General`
