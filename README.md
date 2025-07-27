@@ -9,8 +9,6 @@ An <i>unofficial</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](
  
 --
 > TODO
-- [ ] Default State in initOptions
-- [ ] Default Player States in initOptions
 - [ ] Demos
 - [ ] More Testing Functions
 - [ ] Spawner
@@ -19,8 +17,10 @@ An <i>unofficial</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](
 > [!NOTE]
 > Does not provide support for playroom bots and some discord stuff...
 
-## Install
+## Quick Install
 1. Download the repo
-2. Move the `addons/toybin` folder to the `addons` folder of your project
+2. Move the `toybin` folder from `addons` to the `addons` folder of your project
 3. Enable toybin! under `Project -> Project Settings -> Plugins`
 4. Add your game ID to toybin! in `Project -> Project Settings -> toybin -> General`
+
+You can find more information about installation [here](https://github.com/Alkaliii/toybin/wiki/Installation-and-Setup)
