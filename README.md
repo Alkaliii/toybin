@@ -1,8 +1,6 @@
-<img src="https://github.com/user-attachments/assets/4ea1eacb-b8ff-45e2-a099-cdd45b714b5c" width="70"/>
-<b>toybin!</b>
+<img src="https://github.com/user-attachments/assets/1c5119c4-f0e1-4b83-ab6a-c298d0e27085" width="70"/>
 
----
-An <i>unofficial</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](https://godotengine.org/)
+<b>toybin!</b> An <i>unofficial</i> [Playroom](https://joinplayroom.com/) plugin for [Godot 4](https://godotengine.org/)
 
 - Provides encapsulations for 90% of the Playroom API
 - And some extra features I'm still working on
