@@ -6,6 +6,7 @@ class_name prInitOptions
 ## [url]https://docs.joinplayroom.com/apidocs[/url]
 
 var gameId : String
+@export var override_game_id : String ## Not Recommended
 @export var streamMode : bool = false
 @export var liveMode : String
 @export var allowGamepads : bool = false
@@ -17,14 +18,16 @@ var gameId : String
 @export var skipLobby : bool = false
 @export var reconnectGracePeriod : float = 0
 @export var maxPlayersPerRoom : float
-#@export var defaultStates : Object #idk needs to be set differently?
-#@export var defaultPlayerStates : Object #idk needs to be set differently?
+@export var defaultStates : Dictionary
+@export var defaultPlayerStates : Dictionary
 @export var matchmaking : prMatchmakingOptions
 @export var discord : bool = false
 
 func generate() -> Object:
 	var initOptions : Object = JavaScriptBridge.create_object("Object")
-	initOptions.gameId = ToybinUtil.get_game_id()
+	if !override_game_id:
+		initOptions.gameId = ToybinUtil.get_game_id()
+	else: initOptions.gameId = override_game_id
 	initOptions.streamMode = streamMode
 	if liveMode: initOptions.liveMode = liveMode
 	initOptions.allowGamepads = allowGamepads
@@ -35,6 +38,19 @@ func generate() -> Object:
 	initOptions.skipLobby = skipLobby
 	initOptions.reconnectGracePeriod = reconnectGracePeriod
 	if maxPlayersPerRoom and !skipLobby: initOptions.maxPlayersPerRoom = maxPlayersPerRoom
+	
+	if defaultStates:
+		var dS : Object = JavaScriptBridge.create_object("Object")
+		for s in defaultStates:
+			dS[s] = defaultStates[s]
+		initOptions.defaultStates = dS
+	
+	if defaultPlayerStates:
+		var dPS : Object = JavaScriptBridge.create_object("Object")
+		for s in defaultPlayerStates:
+			dPS[s] = defaultPlayerStates[s]
+		initOptions.defaultPlayerStates = dPS
+	
 	if matchmaking: initOptions.matchmaking = matchmaking.generate()
 	initOptions.discord = discord
 	

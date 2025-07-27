@@ -149,7 +149,7 @@ func request_modify(modification : String) -> bool:
 	request_user_permission(UP_TITLE,UP_MODIFY_TEXT % [EXPORT_PRESET_PATH,modification])
 	var result : bool = await USER_PERMISSION
 	if !result:
-		ToybinUtil._print_output(["User denied preset modification."])
+		ToybinUtil._print_output(["User denied file modification."])
 		return false
 	return true
 
@@ -158,6 +158,7 @@ func attempt_restart() -> void:
 	var restart_result : bool = await USER_PERMISSION
 	if !restart_result: 
 		ToybinUtil._print_output(["User denied editor restart."])
+		get_editor_interface().get_resource_filesystem().scan()
 		return
 	get_editor_interface().restart_editor(true)
 	return
@@ -223,6 +224,8 @@ func add_settings() -> void:
 		ProjectSettings.set_setting("toybin/general/game_id", "0")
 	if not ProjectSettings.has_setting("toybin/general/game_id_env_path"):
 		ProjectSettings.set_setting("toybin/general/game_id_env_path", "")
+	if not ProjectSettings.has_setting("toybin/general/ignore_missing_game_id"):
+		ProjectSettings.set_setting("toybin/general/ignore_missing_game_id", false)
 	#if not ProjectSettings.has_setting("milestone/general/save_as_json"):
 		#ProjectSettings.set_setting("milestone/general/save_as_json", true)
 
@@ -237,5 +240,7 @@ func remove_settings() -> void:
 		ProjectSettings.set_setting("toybin/general/game_id", null)
 	if ProjectSettings.has_setting("toybin/general/game_id_env_path"):
 		ProjectSettings.set_setting("toybin/general/game_id_env_path", null)
+	if ProjectSettings.has_setting("toybin/general/ignore_missing_game_id"):
+		ProjectSettings.set_setting("toybin/general/ignore_missing_game_id", null)
 	
 	ProjectSettings.save()

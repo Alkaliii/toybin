@@ -15,7 +15,23 @@ run/main_scene="uid://bbjehsw51n2c6"
 config/features=PackedStringArray("4.4", "GL Compatibility")
 config/icon="uid://de8hx8y6cs3sy"
 
+[autoload]
+
+Ply="*res://addons/toybin/playroom/playroom.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/toybin/plugin.cfg")
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+
+[toybin]
+
+debug/print_errors=true
+debug/print_output=true
+general/game_id="0"
+general/game_id_env_path="res://.env"
+general/ignore_missing_game_id=false

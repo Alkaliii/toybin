@@ -38,7 +38,7 @@ func getState(key : String) -> Variant:
 	## Consider using toybinSynchronizer
 	if !javascript_object: return null
 	if !Ply.connected: 
-		Ply._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.getState()"})
+		ToybinUtil._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.getState()"})
 		return null
 	
 	# WARNING : You can only send Godot Primitives (String, Float, Int, Bool, Null) through Playroom
@@ -50,7 +50,7 @@ func setState(key : String, value : Variant, reliable : bool = false) -> void:
 	## Consider using toybinSynchronizer
 	if !javascript_object: return
 	if !Ply.connected: 
-		Ply._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.setState()"})
+		ToybinUtil._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.setState()"})
 		return
 	
 	#reliable == true : Websocket, Slow but will send - good for things like top level game state
@@ -64,6 +64,6 @@ func kick() -> void:
 func isBot() -> bool:
 	if !javascript_object: return false
 	if !Ply.connected:
-		Ply._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.isBot()"})
+		ToybinUtil._print_error({"not connected!":ToybinUtil.errors.NOT_CONNECTED % "PlayerState.isBot()"})
 		return false
 	return javascript_object.isBot()

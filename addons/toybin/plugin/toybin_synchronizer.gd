@@ -8,6 +8,9 @@ class_name toybinSynchronizer
 ## Will not pack objects, since that isn't safe.
 static func pack_data(data : Variant) -> String:
 	#will not pack objects.
+	if data is Object:
+		ToybinUtil._print_output(["WARNING: toybin will not pack objects correctly by default. <%s>" % str(data)])
+	
 	var dat := var_to_bytes(data).hex_encode()
 	return dat
 
@@ -33,6 +36,8 @@ static func push_sync(
 		if str(v) in source:
 			var sdat = source[str(v)]
 			#check for objects?
+			if sdat is Object:
+				ToybinUtil._print_output(["WARNING: toybin will not pack objects correctly by default. <%s>.<%s>" % [str(source),v]])
 			dat[v] = sdat
 	
 	#pack data

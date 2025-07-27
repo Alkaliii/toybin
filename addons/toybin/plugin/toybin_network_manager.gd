@@ -28,11 +28,11 @@ static var custom_rpcs : Dictionary[int,Callable] = {
 static func send_rpc(custom_rpc_id : int, data : Variant, recipient : String = "", mode := ToybinUtil.rpcMode.OTHERS) -> bool:
 	if !custom_rpcs.has(custom_rpc_id):
 		#unregistered rpc
-		Ply._print_error({"unregistered rpc!":ToybinUtil.errors.UNREGISTERED_TOYRPC % str(custom_rpc_id)})
+		ToybinUtil._print_error({"unregistered rpc!":ToybinUtil.errors.UNREGISTERED_TOYRPC % str(custom_rpc_id)})
 		return false
 	if !mode in [0,1,2]:
 		#bad mode
-		Ply._print_error({"bad mode!":ToybinUtil.errors.BAD_RPC_MODE})
+		ToybinUtil._print_error({"bad mode!":ToybinUtil.errors.BAD_RPC_MODE})
 		return false
 	
 	var head = pnm_header.new(builtin_rpc.TOYRPC,custom_rpc_id,recipient)
@@ -46,15 +46,15 @@ const register_success = "RPC_ID <%s> has been registered to <%s>."
 static func register_rpc(id : int,action : Callable) -> bool:
 	if id in [NULL_CONTEXT,DEBUG_CRPC]:
 		#reserved id
-		Ply._print_error({"reserved!":ToybinUtil.errors.RESERVED_RPC % str(id)})
+		ToybinUtil._print_error({"reserved!":ToybinUtil.errors.RESERVED_RPC % str(id)})
 		return false
 	if custom_rpcs.has(id):
 		#warn overwrite?
 		var info = [str(id),str(custom_rpcs[id]),str(action)]
-		Ply._print_error({"overwrite!":ToybinUtil.errors.WARN_RPC_OVERWRITE % info})
+		ToybinUtil._print_error({"overwrite!":ToybinUtil.errors.WARN_RPC_OVERWRITE % info})
 	
 	custom_rpcs[id] == action
-	Ply._print_output([register_success % [str(id),str(action)]])
+	ToybinUtil._print_output([register_success % [str(id),str(action)]])
 	return true
 
 class pnm_header:
@@ -79,13 +79,13 @@ class pnm_header:
 func _onTNM_RPC(data) -> void:
 	var unpacked_data = toybinSynchronizer.unpack_data(data[0])
 	if typeof(unpacked_data) != TYPE_ARRAY:
-		Ply._print_error({"bad data!":ToybinUtil.errors.BAD_DATA_ON_NETWORK,"?":str(unpacked_data)})
+		ToybinUtil._print_error({"bad data!":ToybinUtil.errors.BAD_DATA_ON_NETWORK,"?":str(unpacked_data)})
 		return
 	if !unpacked_data.size() > 0:
-		Ply._print_error({"no data!":ToybinUtil.errors.NO_DATA_ON_NETWORK})
+		ToybinUtil._print_error({"no data!":ToybinUtil.errors.NO_DATA_ON_NETWORK})
 		return
 	if not pnm_header.convert_header(unpacked_data[0]) is pnm_header:
-		Ply._print_error({"bad data!":ToybinUtil.errors.BAD_DATA_ON_NETWORK,"?":str(unpacked_data[0])})
+		ToybinUtil._print_error({"bad data!":ToybinUtil.errors.BAD_DATA_ON_NETWORK,"?":str(unpacked_data[0])})
 		return
 	
 	var RPC_DATA : Array = unpacked_data as Array
@@ -103,8 +103,8 @@ func _onTNM_RPC(data) -> void:
 				#print(RPC_DATA[1])
 				if typeof(RPC_DATA[1]) == TYPE_ARRAY:
 					for m in RPC_DATA[1]:
-						Ply._print_output([str(m)])
-				else: Ply._print_output([str(RPC_DATA[1])])
+						ToybinUtil._print_output([str(m)])
+				else: ToybinUtil._print_output([str(RPC_DATA[1])])
 				var message_data = RPC_DATA.duplicate()
 				message_data.remove_at(0)
 				match HEADER.type:
@@ -119,7 +119,7 @@ func _onTNM_RPC(data) -> void:
 			if custom_rpcs.has(HEADER.context) and HEADER.context != NULL_CONTEXT:
 				custom_rpcs[int(HEADER.context)].call(RPC_DATA[1])
 			else:
-				Ply._print_error({"unregistered rpc!":ToybinUtil.errors.UNREGISTERED_TOYRPC % str(HEADER.context)})
+				ToybinUtil._print_error({"unregistered rpc!":ToybinUtil.errors.UNREGISTERED_TOYRPC % str(HEADER.context)})
 
 func _setup_network() -> void:
 	Ply.rm.RPC.register("toybin_network_manager_rpc",Ply.bridgeToJS(_onTNM_RPC))
@@ -134,10 +134,10 @@ func _network_status() -> void:
 		send_rpc(DEBUG_CRPC,"setup playroom network manager on %s" % Ply.who_am_i.id,Ply.who_am_i.id,ToybinUtil.rpcMode.ALL) #debug
 		_send_internal_rpc(builtin_rpc.MESSAGE,["playroom network manager is running!"],Ply.who_am_i.id,ToybinUtil.rpcMode.ALL) #message up and running!
 	else:
-		Ply._print_output(["playroom network manager is NOT running."])
+		ToybinUtil._print_output(["playroom network manager is NOT running."])
 
 static func _onDebug(data) -> void:
-	Ply._print_output(["An RPC was sent to a debug function through playroom.",str(data)])
+	ToybinUtil._print_output(["An RPC was sent to a debug function through playroom.",str(data)])
 
 static func _send_internal_rpc(id : builtin_rpc, data : Variant, recipient : String = "", mode := ToybinUtil.rpcMode.OTHERS):
 	#this is for toybin! use at your own risk

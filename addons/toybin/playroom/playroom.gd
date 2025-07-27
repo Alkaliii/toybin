@@ -408,7 +408,7 @@ func _status(with_output : bool = true) -> bool:
 	if !t or t == null:
 		return false
 	
-	_print_output(["Playroom <Ply.rm> is avalible."])
+	_print_output(["Playroom <Ply.rm> is available."])
 	
 	if ProjectSettings.has_setting("toybin/general/game_id"):
 		if ProjectSettings.get_setting("toybin/general/game_id_env_path") == "":
@@ -426,6 +426,10 @@ func _status(with_output : bool = true) -> bool:
 	else:
 		#settings didn't init? crit fail
 		_print_error({"Failure!":ToybinUtil.errors.MISSING_PROJECT_SETTING})
+		return false
+	
+	# Check pull game id
+	if ToybinUtil.get_game_id() == "" and !ProjectSettings.get_setting("toybin/general/ignore_missing_game_id"):
 		return false
 	
 	if !network_manager: _setup_network_manager()

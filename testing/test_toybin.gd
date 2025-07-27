@@ -87,9 +87,9 @@ func test_host_methods() -> bool:
 	else: return bad(method_b) #host didn't transfer
 
 static func good(method : String) -> bool:
-		Ply._print_output([test_success % method])
+		ToybinUtil._print_output([test_success % method])
 		return true
 
 static func bad(method : String) -> bool:
-	Ply._print_error({"test failed":test_failure % method})
+	ToybinUtil._print_error({"test failed":test_failure % method})
 	return false

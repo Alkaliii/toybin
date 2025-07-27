@@ -32,7 +32,7 @@ const rpcMode : Dictionary = {
 }
 
 const env_section := "playroom/enviroment_variables"
-const env_key := "gameId"
+const env_key := "game_id"
 static func get_game_id() -> String:
 	var env_path : String = ProjectSettings.get_setting("toybin/general/game_id_env_path")
 	var id : String = ProjectSettings.get_setting("toybin/general/game_id")
@@ -44,30 +44,31 @@ static func get_game_id() -> String:
 		
 		#NOTE ensure you have .env in the non-resource export filter
 		if err != OK:
-			Ply._print_error({"Bad Env Path":errors.FAIL_LOAD % env_path,
+			_print_error({"Bad Env Path":errors.FAIL_LOAD % env_path,
 			"No export filter?":suggestions.SET_EXPORT_FILTER})
 			return ""
 		
 		#config env file exists
 		if !config.has_section(env_section):
-			Ply._print_error({"Bad Env Section":errors.NO_ENV_SECTION % env_section})
+			_print_error({"Bad Env Section":errors.NO_ENV_SECTION % env_section})
 			return ""
 		
 		if !config.has_section_key(env_section,env_key):
-			Ply._print_error({"Bad Env Key":errors.NO_ENV_KEY % [env_section,env_key]})
+			_print_error({"Bad Env Key":errors.NO_ENV_KEY % [env_section,env_key]})
 			return ""
 		
 		#config value exists
 		var v = config.get_value(env_section,env_key)
 		if v == null:
-			Ply._print_error({"Bad Env Value":errors.NO_GAME_ID_IN_ENV})
+			_print_error({"Bad Env Value":errors.NO_GAME_ID_IN_ENV})
 			return ""
 		
 		return str(v)
 	else:
 		#get game id from project settings
 		if id == null or id == "0":
-			Ply._print_error({"No game id":ToybinUtil.errors.NO_GAME_ID})
+			if ProjectSettings.get_setting("toybin/general/ignore_missing_game_id"): return ""
+			_print_error({"No game id":ToybinUtil.errors.NO_GAME_ID})
 			return ""
 		
 		return id
